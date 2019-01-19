@@ -1,7 +1,7 @@
 {
   "name": "ember-test-selector-completion",
   "displayName": "Ember Test Selector Completion",
-  "description": "Updates the javascript wordPattern to also consider hyphenated words",
+  "description": "Autocomplete for ember-test-selectors",
   "version": "0.0.2",
   "publisher": "jxson",
   "repository": {
