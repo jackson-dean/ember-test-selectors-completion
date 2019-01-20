@@ -7,7 +7,7 @@ export function isTemplateFile(fileName: string) {
 }
 
 export function matchCompletionTrigger(linePrefix: string) {
-  return linePrefix.match(/\[data-t.*/);
+  return linePrefix.match(/\[d.*/);
 }
 
 /**
