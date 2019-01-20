@@ -2,7 +2,7 @@
   "name": "ember-test-selector-completion",
   "displayName": "Ember Test Selector Completion",
   "description": "Autocomplete for ember-test-selectors",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "jxson",
   "repository": {
     "type": "git",
