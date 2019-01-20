@@ -23,14 +23,19 @@ export function activate(context: vscode.ExtensionContext) {
           document.lineAt(position).text.substr(0, position.character)
         );
 
-
         if (!completionTrigger) {
           return;
         }
 
         // create the text range to replace text when committing the completion
-        let startPosition = new vscode.Position(position.line, position.character - completionTrigger[0].length);
-        let endPosition = new vscode.Position(position.line, position.character);
+        let startPosition = new vscode.Position(
+          position.line,
+          position.character - completionTrigger[0].length
+        );
+        let endPosition = new vscode.Position(
+          position.line,
+          position.character
+        );
         let textEditRange = new vscode.Range(startPosition, endPosition);
 
         let aggregateTestSelectors: string[] = [];
