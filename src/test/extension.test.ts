@@ -1,22 +1,46 @@
-//
-// Note: This example test is leveraging the Mocha test framework.
-// Please refer to their documentation on https://mochajs.org/ for help.
-//
+import * as assert from "assert";
+import {
+  parseTestSelectorsFromTemplate,
+  parseTestSelectorsFromTest
+} from "../utils";
 
-// The module 'assert' provides assertion methods from node
-import * as assert from 'assert';
+suite("parseTestSelector Tests", function() {
+  test("it parses a template file", function() {
+    let templateText = `
+            <div data-test-plain-html>
 
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
-// import * as vscode from 'vscode';
-// import * as myExtension from '../extension';
+            {{my-component data-test-component-single-line=true}}
 
-// Defines a Mocha test suite to group tests of similar kind together
-suite("Extension Tests", function () {
+            {{my-component
+                data-test-component-multi-line=true
+            }}
 
-    // Defines a Mocha unit test
-    test("Something 1", function() {
-        assert.equal(-1, [1, 2, 3].indexOf(5));
-        assert.equal(-1, [1, 2, 3].indexOf(0));
-    });
+            {{my-component
+                data-test-selector-with-static-value="123"
+            }}
+
+            {{my-component
+                data-test-selector-with-dynamic-value=index
+            }}
+        `;
+
+    let selectors = parseTestSelectorsFromTemplate(templateText);
+    assert.equal(selectors.length, 5, 'There are five selectors parsed');
+    assert.equal(selectors[0], 'data-test-plain-html');
+    assert.equal(selectors[1], 'data-test-component-single-line');
+    assert.equal(selectors[2], "data-test-component-multi-line");
+    assert.equal(selectors[3], 'data-test-selector-with-static-value');
+    assert.equal(selectors[4], 'data-test-selector-with-dynamic-value');
+  });
+
+  test("it parses a test file", function() {
+    let testText = `
+            '[data-test-basic-selector]'
+            '[data-test-selector-with-value="123"]'
+        `;
+    let selectors = parseTestSelectorsFromTest(testText);
+    assert.equal(selectors.length, 2, 'There are two selectors parsed');
+    assert.equal(selectors[0], 'data-test-basic-selector');
+    assert.equal(selectors[1], 'data-test-selector-with-value="123"');
+  });
 });

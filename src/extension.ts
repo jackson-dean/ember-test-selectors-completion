@@ -1,5 +1,11 @@
 "use strict";
 import * as vscode from "vscode";
+import {
+  isTestFile,
+  matchCompletionTrigger,
+  shouldParseTestSelectors,
+  getParsingFunction
+} from "./utils";
 
 export function activate(context: vscode.ExtensionContext) {
   const provider = vscode.languages.registerCompletionItemProvider(
@@ -9,68 +15,49 @@ export function activate(context: vscode.ExtensionContext) {
         document: vscode.TextDocument,
         position: vscode.Position
       ) {
-        // bail early if in not in a test file
-        if (!/-test.(:?js|ts)/.test(document.fileName)) {
+        if (!isTestFile(document.fileName)) {
           return;
         }
 
-        let linePrefix = document
-          .lineAt(position)
-          .text.substr(0, position.character);
-        let completionTrigger = linePrefix.match(/\[data-t.*/);
+        let completionTrigger = matchCompletionTrigger(
+          document.lineAt(position).text.substr(0, position.character)
+        );
 
-        if (completionTrigger === null) {
+
+        if (!completionTrigger) {
           return;
         }
 
-        let testSelectors: string[] = [];
+        // create the text range to replace text when committing the completion
+        let startPosition = new vscode.Position(position.line, position.character - completionTrigger[0].length);
+        let endPosition = new vscode.Position(position.line, position.character);
+        let textEditRange = new vscode.Range(startPosition, endPosition);
+
+        let aggregateTestSelectors: string[] = [];
 
         vscode.workspace.textDocuments.forEach(currentDocument => {
-          if (
-            !(
-              currentDocument.fileName.endsWith(".hbs") ||
-              currentDocument.fileName.endsWith("-test.js")
-            )
-          ) {
-            return;
-          }
-          let matches = currentDocument
-            .getText()
-            .match(/\[?data-test-[a-zA-z-]+\]?/g);
-          if (matches) {
-            testSelectors = testSelectors.concat(matches);
+          if (shouldParseTestSelectors(currentDocument.fileName)) {
+            let parsingFunction = getParsingFunction(currentDocument.fileName);
+            let testSelectors = parsingFunction(currentDocument.getText());
+            aggregateTestSelectors = aggregateTestSelectors.concat(
+              testSelectors
+            );
           }
         });
 
-        if (!testSelectors.length) {
+        if (!aggregateTestSelectors.length) {
           return;
         }
 
-        return [...new Set(testSelectors)].map(testSelector => {
-          let normalizedCompletionItem = testSelector;
+        let dedupedTestSelectors = [...new Set(aggregateTestSelectors)];
 
-          if (normalizedCompletionItem.charAt(0) !== "[") {
-            normalizedCompletionItem = `[${normalizedCompletionItem}`;
-          }
-
-          if (
-            normalizedCompletionItem.charAt(
-              normalizedCompletionItem.length - 1
-            ) !== "]"
-          ) {
-            normalizedCompletionItem = `${normalizedCompletionItem}]`;
-          }
-
+        return dedupedTestSelectors.map(testSelector => {
           let completionItem = new vscode.CompletionItem(
-            normalizedCompletionItem,
+            `[${testSelector}]`,
             vscode.CompletionItemKind.Text
           );
-          let triggerText = (completionTrigger && completionTrigger[0]) || "";
 
-          completionItem.insertText = completionItem.label.replace(
-            triggerText,
-            triggerText.charAt(triggerText.length - 1)
-          );
+          completionItem.range = textEditRange;
 
           return completionItem;
         });
